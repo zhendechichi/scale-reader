@@ -30,7 +30,7 @@ struct ResultEditView: View {
                     DatePicker("测量时间", selection: $reading.date)
                 }
 
-                Section(hasAnyValue ? "识别结果（可直接修改）" : "手动填写") {
+                Section {
                     NumberField(title: "体重", unit: "kg", value: $reading.weightKg)
                     NumberField(title: "体脂肪率", unit: "%", value: $reading.bodyFatPct)
                     NumberField(title: "骨骼肌率", unit: "%", value: $reading.skeletalMusclePct)
@@ -44,6 +44,8 @@ struct ResultEditView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                } header: {
+                    Text(hasAnyValue ? "识别结果（可直接修改）" : "手动填写")
                 } footer: {
                     Text("骨骼肌 = 体重 × 骨骼肌率。苹果健康不支持“骨骼肌率”，只按换算后的 kg 写入“去脂体重”。")
                 }
