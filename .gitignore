@@ -1,0 +1,10 @@
+*.ipa
+*.zip
+build/
+Payload/
+ScaleReader.xcodeproj/
+ScaleReader/Info.plist
+ScaleReader/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+xcuserdata/
+.DS_Store
+__pycache__/
