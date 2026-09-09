@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-/// 应用设置：AI 服务参数（Key 放钥匙串）与“写入健康”开关。
+/// 应用设置：AI 服务参数与“写入健康”开关。
 final class AppSettings: ObservableObject {
     private let defaults = UserDefaults.standard
 
@@ -40,18 +40,19 @@ final class AppSettings: ObservableObject {
         writeMuscleKg = (d.object(forKey: Keys.writeMuscleKg) as? Bool) ?? true
     }
 
-    // MARK: - API Key（存钥匙串）
+    // MARK: - API Key（存应用本地 UserDefaults）
+    // TrollStore/侧载环境下 Keychain 写入会失败，因此改用 UserDefaults 持久化。
 
     var apiKey: String? {
-        KeychainHelper.load(for: Keys.apiKeyAccount)
+        defaults.string(forKey: Keys.apiKeyAccount)
     }
 
     func setAPIKey(_ key: String) {
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            KeychainHelper.delete(for: Keys.apiKeyAccount)
+            defaults.removeObject(forKey: Keys.apiKeyAccount)
         } else {
-            KeychainHelper.save(trimmed, for: Keys.apiKeyAccount)
+            defaults.set(trimmed, forKey: Keys.apiKeyAccount)
         }
     }
 
@@ -68,6 +69,12 @@ final class AppSettings: ObservableObject {
         let model: String
         let note: String
 
+        static let deepseek = Preset(
+            name: "DeepSeek（视觉）",
+            baseURL: "https://api.deepseek.com/v1",
+            model: "deepseek-v4-flash-vision-exp",
+            note: "需用支持视觉的模型；Key 在 platform.deepseek.com 申请"
+        )
         static let openai = Preset(
             name: "OpenAI",
             baseURL: "https://api.openai.com/v1",
@@ -87,6 +94,6 @@ final class AppSettings: ObservableObject {
             note: "国内直连；有免费档，注意限量"
         )
 
-        static let all: [Preset] = [openai, siliconflow, zhipu]
+        static let all: [Preset] = [deepseek, openai, siliconflow, zhipu]
     }
 }
