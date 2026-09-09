@@ -1,0 +1,48 @@
+name: ScaleReader
+targets:
+  ScaleReader:
+    type: application
+    platform: iOS
+    sources:
+      - path: ScaleReader
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.scalereader.app
+        PRODUCT_NAME: ScaleReader
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.9"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_FILE: ScaleReader/Info.plist
+        GENERATE_INFOPLIST_FILE: "NO"
+        CODE_SIGN_ENTITLEMENTS: ScaleReader.entitlements
+        CODE_SIGNING_REQUIRED: "NO"
+        CODE_SIGNING_ALLOWED: "NO"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_BITCODE: "NO"
+    info:
+      path: ScaleReader/Info.plist
+      properties:
+        CFBundleDisplayName: 体脂拍照记录
+        CFBundleDevelopmentRegion: zh_CN
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSCameraUsageDescription: 需要拍摄欧姆龙体脂秤屏幕，用于 AI 识别读数
+        NSHealthShareUsageDescription: 允许把识别出的体重/体脂肪率/骨骼肌等数据写入“健康”App
+        NSHealthUpdateUsageDescription: 允许把识别出的体重/体脂肪率/骨骼肌等数据写入“健康”App
+
+schemes:
+  ScaleReader:
+    build:
+      targets:
+        ScaleReader: all
+    run:
+      config: Debug
+    archive:
+      config: Release
