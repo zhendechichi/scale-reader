@@ -1,0 +1,54 @@
+name: Build IPA
+
+# 手动触发：进入仓库 Actions 页面 → 选中本工作流 → Run workflow
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate App Icon
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 scripts/make_icon.py
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build unsigned .app (Release, device)
+        run: |
+          xcodebuild \
+            -project ScaleReader.xcodeproj \
+            -scheme ScaleReader \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Ad-hoc sign with entitlements and package .ipa
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release-iphoneos/ScaleReader.app"
+          test -d "$APP"
+          codesign --force --sign - --entitlements ScaleReader.entitlements "$APP"
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qry "ScaleReader.ipa" Payload
+          ls -lh ScaleReader.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScaleReader-ipa
+          path: ScaleReader.ipa
+          if-no-files-found: error
