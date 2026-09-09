@@ -34,6 +34,7 @@ struct SettingsView: View {
 
     // MARK: - AI 服务
 
+    @ViewBuilder
     private var aiSection: some View {
         Section {
             ForEach(AppSettings.Preset.all, id: \.name) { preset in
