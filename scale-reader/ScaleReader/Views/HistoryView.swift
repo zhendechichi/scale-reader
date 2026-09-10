@@ -12,12 +12,18 @@ struct HistoryView: View {
     enum Metric: String, CaseIterable, Identifiable {
         case weight = "体重"
         case bodyFat = "体脂肪率"
-        case muscle = "骨骼肌率"
-        case subcutaneousFat = "皮下脂肪率"
-        case visceralFat = "内脏脂肪等级"
+        case bodyAge = "身体年龄"
         case bmi = "BMI"
         case basalMetabolism = "基础代谢"
-        case bodyAge = "身体年龄"
+        case visceralFat = "内脏脂肪等级"
+        case subcutaneousFat = "皮下脂肪率（全身）"
+        case muscle = "骨骼肌率（全身）"
+        case armsSubcutaneous = "皮下脂肪率（双臂）"
+        case armsMuscle = "骨骼肌率（双臂）"
+        case trunkSubcutaneous = "皮下脂肪率（躯干）"
+        case trunkMuscle = "骨骼肌率（躯干）"
+        case legsSubcutaneous = "皮下脂肪率（双脚）"
+        case legsMuscle = "骨骼肌率（双脚）"
         var id: String { rawValue }
     }
 
@@ -120,12 +126,18 @@ struct HistoryView: View {
             switch metric {
             case .weight: value = reading.weightKg
             case .bodyFat: value = reading.bodyFatPct
-            case .muscle: value = reading.skeletalMusclePct
-            case .subcutaneousFat: value = reading.subcutaneousFatPct
-            case .visceralFat: value = reading.visceralFatLevel
+            case .bodyAge: value = reading.bodyAge
             case .bmi: value = reading.bmi
             case .basalMetabolism: value = reading.basalMetabolismKcal
-            case .bodyAge: value = reading.bodyAge
+            case .visceralFat: value = reading.visceralFatLevel
+            case .subcutaneousFat: value = reading.subcutaneousFatPct
+            case .muscle: value = reading.skeletalMusclePct
+            case .armsSubcutaneous: value = reading.armsSubcutaneousFatPct
+            case .armsMuscle: value = reading.armsSkeletalMusclePct
+            case .trunkSubcutaneous: value = reading.trunkSubcutaneousFatPct
+            case .trunkMuscle: value = reading.trunkSkeletalMusclePct
+            case .legsSubcutaneous: value = reading.legsSubcutaneousFatPct
+            case .legsMuscle: value = reading.legsSkeletalMusclePct
             }
             return value.map { TrendPoint(date: reading.date, value: $0) }
         }

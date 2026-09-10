@@ -37,25 +37,41 @@ enum AIServiceError: LocalizedError {
 struct AIService {
     /// 发给视觉模型的提示词。
     private static let prompt = """
-    你是欧姆龙 HBF-701（Karada Scan）体脂秤屏幕读数识别助手。这台秤测完后需要按键逐项翻页，一屏显示一项。我会给你若干张该秤液晶屏的照片，请把全部照片里出现过的读数都找出来，合并成一轮测量结果。
+    你是欧姆龙 HBF-701（中文版，Karada Scan 体组成计）屏幕读数识别助手。这台秤测完后要按键逐屏翻页，一轮测量约 10 屏。我会给你这一轮拍下的所有屏幕照片（一屏一张），请把全部读数汇总成一轮结果。
 
-    它可能显示的测量项（中文或日文标签都算）：
+    第 1~6 屏，每屏只有一个大数字：
     - 体重：单位 kg
     - 体脂肪率：单位 %
-    - 骨骼肌率：单位 %（也可能显示为“骨格筋率”“肌肉率”）
-    - 皮下脂肪率：单位 %
-    - 内脏脂肪等级：无单位（如 1~30 的整数；也可能显示“内臓脂肪レベル”“内脏脂肪指数”）
-    - BMI：无单位（如 22.3）
-    - 基础代谢：单位 kcal（也可能显示“基礎代謝”）
-    - 身体年龄：单位 岁（也可能显示“身体年齢”“体年龄”）
+    - 身体年龄：单位 岁
+    - BMI：无单位
+    - 基础代谢：单位 kcal
+    - 内脏脂肪等级：无单位整数，如 1~30
+
+    第 7~10 屏，每屏**同时显示两个值**：一边是「皮下脂肪率」，另一边是「骨骼肌率」，单位都是 %。
+    这 4 屏分别对应 4 个部位，请按屏幕上的人体图示判断部位，把两个数分别填到对应字段：
+    - 全身 → subcutaneousFatPct / skeletalMusclePct
+    - 双臂（手臂）→ armsSubcutaneousFatPct / armsSkeletalMusclePct
+    - 躯干（身躯、身体中段）→ trunkSubcutaneousFatPct / trunkSkeletalMusclePct
+    - 双脚（腿部）→ legsSubcutaneousFatPct / legsSkeletalMusclePct
+
+    判断部位的依据（两者结合看）：
+    1. 人体图示中被高亮/点亮的部位：整个人形=全身；双臂伸出并有一条横杠=双臂；只有躯干部分=躯干；只有腿部=双脚。
+    2. 图示上方标签行「全身 / 双臂 / 躯干 / 双脚」中被选中（加括号或高亮）的那个词。
+
+    另外：第 7~10 屏上方可能仍显示「内脏脂肪等级」和同一个数字，这个值只算一次，填进 visceralFatLevel。
+
+    标签语言：界面以中文为主；若某张照片上出现日文标签，按同义理解——
+    体重=体重 / 体脂肪率=体脂肪率 / 体年齢=身体年龄 / 基礎代謝=基础代谢 /
+    内臓脂肪レベル=内脏脂肪等级 / 骨格筋率=骨骼肌率 / 腕=双臂 / 体幹=躯干 / 脚=双脚。
 
     要求：
     1. 仔细辨认大数字和它上方/旁边的小标签文字，不要把标签或图标当成读数，也不要漏掉任何一项。
     2. 只看照片里的内容，不要猜测或推算。
     3. 只输出一个 JSON 对象，不要输出任何解释文字，不要用 ``` 代码块包裹。
     4. 某字段若在所有照片中都没出现或看不清，填 null。
-    5. 严格使用这个格式（字段名完全一致）：
-    {"weightKg": null,"bodyFatPct": null,"skeletalMusclePct": null,"subcutaneousFatPct": null,"visceralFatLevel": null,"bmi": null,"basalMetabolismKcal": null,"bodyAge": null,"note": ""}
+    5. 不要混淆「体脂肪率」（全身总体脂）与「皮下脂肪率」（按部位）。
+    6. 严格使用这个格式（字段名完全一致）：
+    {"weightKg": null,"bodyFatPct": null,"bodyAge": null,"bmi": null,"basalMetabolismKcal": null,"visceralFatLevel": null,"subcutaneousFatPct": null,"skeletalMusclePct": null,"armsSubcutaneousFatPct": null,"armsSkeletalMusclePct": null,"trunkSubcutaneousFatPct": null,"trunkSkeletalMusclePct": null,"legsSubcutaneousFatPct": null,"legsSkeletalMusclePct": null,"note": ""}
     """
 
     /// 把若干张屏幕照片交给视觉模型，解析成一条记录。

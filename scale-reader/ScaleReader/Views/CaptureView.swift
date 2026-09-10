@@ -13,7 +13,7 @@ struct CaptureView: View {
     @State private var errorText: String?
     @State private var pendingReading: ScaleReading?
 
-    private let maxImages = 6
+    private let maxImages = 12
 
     var body: some View {
         NavigationStack {
@@ -78,7 +78,7 @@ struct CaptureView: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("怎么用", systemImage: "lightbulb.fill")
                 .font(.headline)
-            Text("站上体脂秤完成测量，测完后每按一下翻一屏。把每一屏都拍下来（体重 / 体脂肪率 / 骨骼肌率 / 皮下脂肪率 / 内脏脂肪等级 / BMI / 基础代谢 / 身体年龄，一屏一拍），然后点“开始 AI 识别”。注意屏幕会自动熄灭，请连着拍。")
+            Text("站上体脂秤完成测量，测完后按键逐屏翻页，一轮约 10 屏：前 6 屏是 体重 / 体脂肪率 / 身体年龄 / BMI / 基础代谢 / 内脏脂肪等级；后 4 屏是 全身 / 双臂 / 躯干 / 双脚 的皮下脂肪率与骨骼肌率（每屏两个数）。一屏拍一张（共约 10 张），记得把整屏都拍进去（含上方人体图示，AI 靠它判断部位），然后点“开始 AI 识别”。屏幕会自动熄灭，请连着拍。")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
