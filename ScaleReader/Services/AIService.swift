@@ -37,44 +37,40 @@ enum AIServiceError: LocalizedError {
 struct AIService {
     /// 发给视觉模型的提示词。
     private static let prompt = """
-    你是欧姆龙 HBF-701（中文版，Karada Scan 体组成计）屏幕读数识别助手。这台秤测完后要按键逐屏翻页，一轮测量约 10 屏。我会给你这一轮拍下的所有屏幕照片（一屏一张），请把全部读数汇总成一轮结果。
+    你是欧姆龙 HBF-701（中文版，Karada Scan 体组成计）的屏幕读数识别助手。这台秤测完后按键逐屏翻页，一轮约 10 屏。我是**按顺序**一屏拍了一张照片，请把全部读数汇总成一轮结果。
 
-    第 1~6 屏，每屏只有一个大数字：
-    - 体重：单位 kg
-    - 体脂肪率：单位 %
-    - 身体年龄：单位 岁
-    - BMI：无单位
-    - 基础代谢：单位 kcal
-    - 内脏脂肪等级：无单位整数，如 1~30
+    照片顺序与屏幕对应关系：
+    第 1 张=体重 ｜ 第 2 张=体脂肪率 ｜ 第 3 张=身体年龄 ｜ 第 4 张=BMI ｜
+    第 5 张=基础代谢 ｜ 第 6 张=内脏脂肪等级 ｜
+    第 7 张=全身 ｜ 第 8 张=双臂 ｜ 第 9 张=躯干 ｜ 第 10 张=双脚
 
-    第 7~10 屏，每屏**同时显示两个值**：一边是「皮下脂肪率」，另一边是「骨骼肌率」，单位都是 %。
-    这 4 屏分别对应 4 个部位，请按屏幕上的人体图示判断部位，把两个数分别填到对应字段：
-    - 全身 → subcutaneousFatPct / skeletalMusclePct
-    - 双臂（手臂）→ armsSubcutaneousFatPct / armsSkeletalMusclePct
-    - 躯干（身躯、身体中段）→ trunkSubcutaneousFatPct / trunkSkeletalMusclePct
-    - 双脚（腿部）→ legsSubcutaneousFatPct / legsSkeletalMusclePct
+    前 6 张每张只有一个大数字：
+    - 体重：单位 kg；体脂肪率：单位 %；身体年龄：单位 岁；
+      BMI：无单位；基础代谢：单位 kcal；内脏脂肪等级：无单位
+    后 4 张（第 7~10 张）每张**同时显示两个百分数**：一个是「皮下脂肪率」、一个是「骨骼肌率」。
+    请把第 7~10 张的两个数分别填入 全身 / 双臂 / 躯干 / 双脚 对应的字段
+    （也可以结合屏幕上人体图示的高亮部位、以及标签行中被选中的「全身 / 双臂 / 躯干 / 双脚」来确认）。
 
-    判断部位的依据（两者结合看）：
-    1. 人体图示中被高亮/点亮的部位：整个人形=全身；双臂伸出并有一条横杠=双臂；只有躯干部分=躯干；只有腿部=双脚。
-    2. 图示上方标签行「全身 / 双臂 / 躯干 / 双脚」中被选中（加括号或高亮）的那个词。
+    读数规则：
+    1. 【小数点是重点】屏幕上的小数点是两个数字之间一个很小的点，很容易被忽略：
+       · 「1.0」不是「10」 ·「17.4」不是「174」
+       · **内脏脂肪等级这一屏尤其注意**：如果数字右下角有一个小点，那就是带小数的值（例如 1.0），不要读成整数 10
+       · 请逐位确认；实在看不清就填 null，不要猜。
+    2. 只读大数字，不要把中文标签、人体图示、图标当成读数。
+    3. 合理范围（明显超出说明看错了，请重新确认）：
+       体重 20~200 kg｜体脂肪率 3~60%｜身体年龄 5~90 岁｜BMI 10~50｜
+       基础代谢 500~4000 kcal｜内脏脂肪等级 1~30｜皮下脂肪率与骨骼肌率 3~70%
+    4. 部位屏的两个百分数不要搞反：一个「皮下脂肪率」、一个「骨骼肌率」。
+    5. 不要把「体脂肪率」（第 2 张，全身总体脂）和「皮下脂肪率」（第 7~10 张部位屏）搞混。
+    6. 某字段在所有照片中都没出现或看不清，填 null。
 
-    另外：第 7~10 屏上方可能仍显示「内脏脂肪等级」和同一个数字，这个值只算一次，填进 visceralFatLevel。
+    另外：请在 note 字段里写一句你实际读到的原文（例如「内脏脂肪=1.0；全身 皮下18.1/骨骼29.3」），方便我核对。
 
-    标签语言：界面以中文为主；若某张照片上出现日文标签，按同义理解——
-    体重=体重 / 体脂肪率=体脂肪率 / 体年齢=身体年龄 / 基礎代謝=基础代谢 /
-    内臓脂肪レベル=内脏脂肪等级 / 骨格筋率=骨骼肌率 / 腕=双臂 / 体幹=躯干 / 脚=双脚。
-
-    要求：
-    1. 仔细辨认大数字和它上方/旁边的小标签文字，不要把标签或图标当成读数，也不要漏掉任何一项。
-    2. 只看照片里的内容，不要猜测或推算。
-    3. 只输出一个 JSON 对象，不要输出任何解释文字，不要用 ``` 代码块包裹。
-    4. 某字段若在所有照片中都没出现或看不清，填 null。
-    5. 不要混淆「体脂肪率」（全身总体脂）与「皮下脂肪率」（按部位）。
-    6. 严格使用这个格式（字段名完全一致）：
+    只输出一个 JSON 对象，不要任何解释文字，不要用 ``` 包裹，字段名必须完全一致：
     {"weightKg": null,"bodyFatPct": null,"bodyAge": null,"bmi": null,"basalMetabolismKcal": null,"visceralFatLevel": null,"subcutaneousFatPct": null,"skeletalMusclePct": null,"armsSubcutaneousFatPct": null,"armsSkeletalMusclePct": null,"trunkSubcutaneousFatPct": null,"trunkSkeletalMusclePct": null,"legsSubcutaneousFatPct": null,"legsSkeletalMusclePct": null,"note": ""}
     """
 
-    /// 把若干张屏幕照片交给视觉模型，解析成一条记录。
+    /// 把若干张屏幕照片交给视觉模型，解析成一条记录（照片需按屏幕顺序）。
     func readReading(images: [UIImage], config: AIConfig) async throws -> ScaleReading {
         guard !config.apiKey.isEmpty else { throw AIServiceError.emptyKey }
         let base = config.baseURL.hasSuffix("/") ? config.baseURL : config.baseURL + "/"
@@ -85,10 +81,9 @@ struct AIService {
         ]
         for image in images {
             guard let jpg = image.jpegDataForAI() else { continue }
-            let b64 = jpg.base64EncodedString()
             content.append([
                 "type": "image_url",
-                "image_url": ["url": "data:image/jpeg;base64,\(b64)"]
+                "image_url": ["url": "data:image/jpeg;base64,\(jpg.base64EncodedString())"]
             ])
         }
         guard content.count > 1 else { throw AIServiceError.noContent }
@@ -101,7 +96,7 @@ struct AIService {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.timeoutInterval = 90
+        request.timeoutInterval = 120
         request.setValue("Bearer \(config.apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
