@@ -98,10 +98,12 @@ struct SettingsView: View {
             Toggle("体重 → 健康", isOn: $settings.writeWeight)
             Toggle("体脂肪率 → 健康", isOn: $settings.writeBodyFat)
             Toggle("骨骼肌 → 健康", isOn: $settings.writeMuscleKg)
+            Toggle("BMI → 健康", isOn: $settings.writeBMI)
+            Toggle("基础代谢 → 健康（静息能量）", isOn: $settings.writeBasalEnergy)
         } header: {
             Text("写入苹果健康")
         } footer: {
-            Text("保存记录时会请求“健康”授权并写入数据。健康没有“骨骼肌率/皮下脂肪率”百分比指标：骨骼肌按 体重×骨骼肌率 换算成 kg 写入“去脂体重”；皮下脂肪率只保存在本 App。侧载环境下若授权异常，本地记录不受影响。")
+            Text("骨骼肌按 体重×骨骼肌率 换算成 kg 写入“去脂体重”（健康没有“骨骼肌率”）。基础代谢写入“静息能量”，默认关闭以免与手表数据混淆。内脏脂肪等级、身体年龄、皮下脂肪率健康里没有对应项，只保存在本 App。侧载环境下若授权异常，本地记录不受影响。")
         }
     }
 
@@ -110,8 +112,8 @@ struct SettingsView: View {
     private var helpSection: some View {
         Section("使用说明") {
             VStack(alignment: .leading, spacing: 6) {
-                Text("1. 站上 HBF-701 完成测量，屏幕会循环显示各项读数")
-                Text("2. 把每个读数画面都拍下来（一屏一拍，可多张）")
+                Text("1. 站上 HBF-701 完成测量")
+                Text("2. 测完后每按一下翻一屏，每屏拍一张照片（共 8 项左右）")
                 Text("3. 点“开始 AI 识别”，在结果页核对/修改后保存")
                 Text("4. 数据写入本地历史，同时按需写入苹果健康")
             }
