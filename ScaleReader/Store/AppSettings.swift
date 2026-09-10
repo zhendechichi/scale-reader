@@ -11,6 +11,8 @@ final class AppSettings: ObservableObject {
         static let writeWeight = "writeWeight"
         static let writeBodyFat = "writeBodyFat"
         static let writeMuscleKg = "writeMuscleKg"
+        static let writeBMI = "writeBMI"
+        static let writeBasalEnergy = "writeBasalEnergy"
         static let apiKeyAccount = "apiKey"
     }
 
@@ -29,6 +31,12 @@ final class AppSettings: ObservableObject {
     @Published var writeMuscleKg: Bool {
         didSet { defaults.set(writeMuscleKg, forKey: Keys.writeMuscleKg) }
     }
+    @Published var writeBMI: Bool {
+        didSet { defaults.set(writeBMI, forKey: Keys.writeBMI) }
+    }
+    @Published var writeBasalEnergy: Bool {
+        didSet { defaults.set(writeBasalEnergy, forKey: Keys.writeBasalEnergy) }
+    }
 
     init() {
         let d = defaults
@@ -38,6 +46,8 @@ final class AppSettings: ObservableObject {
         writeWeight = (d.object(forKey: Keys.writeWeight) as? Bool) ?? true
         writeBodyFat = (d.object(forKey: Keys.writeBodyFat) as? Bool) ?? true
         writeMuscleKg = (d.object(forKey: Keys.writeMuscleKg) as? Bool) ?? true
+        writeBMI = (d.object(forKey: Keys.writeBMI) as? Bool) ?? true
+        writeBasalEnergy = (d.object(forKey: Keys.writeBasalEnergy) as? Bool) ?? false
     }
 
     // MARK: - API Key（存应用本地 UserDefaults）
