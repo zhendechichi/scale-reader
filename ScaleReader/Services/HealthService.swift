@@ -42,7 +42,7 @@ final class HealthService {
             Candidate(label: "体重", identifier: .bodyMass,
                       unit: .gramUnit(with: .kilo), value: reading.weightKg),
             Candidate(label: "体脂肪率", identifier: .bodyFatPercentage,
-                      unit: .percent(), value: reading.bodyFatPct),
+                      unit: .percent(), value: reading.bodyFatPct.map { $0 / 100.0 }),
             Candidate(label: "骨骼肌", identifier: .leanBodyMass,
                       unit: .gramUnit(with: .kilo), value: reading.computedSkeletalMuscleKg),
         ]
