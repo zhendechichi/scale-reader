@@ -11,19 +11,19 @@ struct HistoryView: View {
 
     enum Metric: String, CaseIterable, Identifiable {
         case weight = "体重"
-        case bodyFat = "体脂肪率"
+        case bodyFat = "身体脂肪率"
         case bodyAge = "身体年龄"
         case bmi = "BMI"
         case basalMetabolism = "基础代谢"
-        case visceralFat = "内脏脂肪等级"
+        case visceralFat = "内脏脂肪指数"
         case subcutaneousFat = "皮下脂肪率（全身）"
-        case muscle = "骨骼肌率（全身）"
-        case armsSubcutaneous = "皮下脂肪率（双臂）"
-        case armsMuscle = "骨骼肌率（双臂）"
+        case muscle = "肌肉率（全身）"
+        case armsSubcutaneous = "皮下脂肪率（上肢）"
+        case armsMuscle = "肌肉率（上肢）"
         case trunkSubcutaneous = "皮下脂肪率（躯干）"
-        case trunkMuscle = "骨骼肌率（躯干）"
-        case legsSubcutaneous = "皮下脂肪率（双脚）"
-        case legsMuscle = "骨骼肌率（双脚）"
+        case trunkMuscle = "肌肉率（躯干）"
+        case legsSubcutaneous = "皮下脂肪率（下肢）"
+        case legsMuscle = "肌肉率（下肢）"
         var id: String { rawValue }
     }
 
@@ -57,6 +57,14 @@ struct HistoryView: View {
 
     private var content: some View {
         List {
+            if let latest = store.readings.first {
+                Section("最近一次 · 部位分布") {
+                    BodyMapView(reading: latest)
+                        .padding(.vertical, 6)
+                        .listRowSeparator(.hidden)
+                }
+            }
+
             Section("趋势") {
                 Picker("趋势指标", selection: $metric) {
                     ForEach(Metric.allCases) { m in
