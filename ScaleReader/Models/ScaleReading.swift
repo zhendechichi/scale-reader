@@ -79,25 +79,38 @@ struct ScaleReading: Codable, Identifiable, Equatable {
     }
 
     /// 容错解码：AI 返回的 JSON 只含数值字段，id/date 缺失时用默认值。
+    /// 数值也兼容模型返回字符串（如 "50.2"、"18.1%"）的情况。
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         date = try c.decodeIfPresent(Date.self, forKey: .date) ?? Date()
-        weightKg = try c.decodeIfPresent(Double.self, forKey: .weightKg)
-        bodyFatPct = try c.decodeIfPresent(Double.self, forKey: .bodyFatPct)
-        bodyAge = try c.decodeIfPresent(Double.self, forKey: .bodyAge)
-        bmi = try c.decodeIfPresent(Double.self, forKey: .bmi)
-        basalMetabolismKcal = try c.decodeIfPresent(Double.self, forKey: .basalMetabolismKcal)
-        visceralFatLevel = try c.decodeIfPresent(Double.self, forKey: .visceralFatLevel)
-        subcutaneousFatPct = try c.decodeIfPresent(Double.self, forKey: .subcutaneousFatPct)
-        skeletalMusclePct = try c.decodeIfPresent(Double.self, forKey: .skeletalMusclePct)
-        armsSubcutaneousFatPct = try c.decodeIfPresent(Double.self, forKey: .armsSubcutaneousFatPct)
-        armsSkeletalMusclePct = try c.decodeIfPresent(Double.self, forKey: .armsSkeletalMusclePct)
-        trunkSubcutaneousFatPct = try c.decodeIfPresent(Double.self, forKey: .trunkSubcutaneousFatPct)
-        trunkSkeletalMusclePct = try c.decodeIfPresent(Double.self, forKey: .trunkSkeletalMusclePct)
-        legsSubcutaneousFatPct = try c.decodeIfPresent(Double.self, forKey: .legsSubcutaneousFatPct)
-        legsSkeletalMusclePct = try c.decodeIfPresent(Double.self, forKey: .legsSkeletalMusclePct)
+        weightKg = Self.flexibleDouble(c, .weightKg)
+        bodyFatPct = Self.flexibleDouble(c, .bodyFatPct)
+        bodyAge = Self.flexibleDouble(c, .bodyAge)
+        bmi = Self.flexibleDouble(c, .bmi)
+        basalMetabolismKcal = Self.flexibleDouble(c, .basalMetabolismKcal)
+        visceralFatLevel = Self.flexibleDouble(c, .visceralFatLevel)
+        subcutaneousFatPct = Self.flexibleDouble(c, .subcutaneousFatPct)
+        skeletalMusclePct = Self.flexibleDouble(c, .skeletalMusclePct)
+        armsSubcutaneousFatPct = Self.flexibleDouble(c, .armsSubcutaneousFatPct)
+        armsSkeletalMusclePct = Self.flexibleDouble(c, .armsSkeletalMusclePct)
+        trunkSubcutaneousFatPct = Self.flexibleDouble(c, .trunkSubcutaneousFatPct)
+        trunkSkeletalMusclePct = Self.flexibleDouble(c, .trunkSkeletalMusclePct)
+        legsSubcutaneousFatPct = Self.flexibleDouble(c, .legsSubcutaneousFatPct)
+        legsSkeletalMusclePct = Self.flexibleDouble(c, .legsSkeletalMusclePct)
         note = try c.decodeIfPresent(String.self, forKey: .note)
+    }
+
+    /// 兼容 数字 / 字符串（可带单位或百分号）两种返回形式。
+    private static func flexibleDouble(_ container: KeyedDecodingContainer<CodingKeys>,
+                                       _ key: CodingKeys) -> Double? {
+        if let value = try? container.decodeIfPresent(Double.self, forKey: key) {
+            return value
+        }
+        if let text = try? container.decodeIfPresent(String.self, forKey: key) {
+            return Format.parseLoose(text)
+        }
+        return nil
     }
 
     static func empty() -> ScaleReading {
@@ -147,6 +160,17 @@ enum Format {
         }
         guard !cleaned.isEmpty else { return nil }
         return Double(cleaned)
+    }
+
+    /// 宽松解析：能处理 "18.1"、"50.2 kg"、"22.3%"、"1,5" 等写法。
+    static func parseLoose(_ text: String) -> Double? {
+        if let value = parse(text) { return value }
+        var kept = ""
+        for ch in text where ch.isNumber || ch == "." || ch == "-" {
+            kept.append(ch)
+        }
+        guard !kept.isEmpty else { return nil }
+        return Double(kept)
     }
 
     /// 历史列表里的一行摘要（只放主要几项，避免过长）。
